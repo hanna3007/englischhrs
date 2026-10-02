@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Audio-Lernplattform ohne Schülerkonten, mit geschütztem Adminbereich." />
+    <title>Audio Learning</title>
+    <script>
+      (function () {
+        var segments = window.location.pathname.split('/').filter(Boolean);
+        var bases = [];
+        for (var i = segments.length; i >= 0; i -= 1) {
+          bases.push('/' + segments.slice(0, i).join('/') + (i > 0 ? '/' : ''));
+        }
+        var index = 0;
+        function normalizeBasePath(base) {
+          if (!base || base === '/') return '/';
+          return base.replace(/\/$/, '');
+        }
+        function loadApp(base) {
+          var cfg = window.__AUDIO_LEARNING_CONFIG__ || {};
+          if (!cfg.APP_BASE_PATH || cfg.APP_BASE_PATH === '/') {
+            cfg.APP_BASE_PATH = normalizeBasePath(base);
+          }
+          window.__AUDIO_LEARNING_CONFIG__ = cfg;
+          var css = document.createElement('link');
+          css.rel = 'stylesheet';
+          css.href = base + 'assets/app.css';
+          document.head.appendChild(css);
+          var script = document.createElement('script');
+          script.type = 'module';
+          script.src = base + 'assets/app.js';
+          document.head.appendChild(script);
+        }
+        function tryNextBase() {
+          if (index >= bases.length) {
+            document.documentElement.innerHTML = '<body><p>Audio Learning konnte config.js nicht laden.</p></body>';
+            return;
+          }
+          var base = bases[index++];
+          var script = document.createElement('script');
+          script.src = base + 'config.js';
+          script.onload = function () { loadApp(base); };
+          script.onerror = tryNextBase;
+          document.head.appendChild(script);
+        }
+        tryNextBase();
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
